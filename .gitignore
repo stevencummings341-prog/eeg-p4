@@ -1,0 +1,41 @@
+# Python caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# EEG and experiment data: never commit real subject data
+data/
+**/data/
+*.npz
+*.npy
+*.edf
+*.bdf
+*.fif
+*.set
+*.vhdr
+*.vmrk
+*.eeg
+*.cnt
+*.mat
+
+# Local Claude Code overrides
+.claude/settings.local.json
+**/.claude/settings.local.json
+
+# Vendor / local device bundles (do not version)
+eConScan_AiO/
+iRecorder*/
+
+# Stimulus videos (large binaries; keep locally)
+**/sucai/
+*.mp4
+
+# Temporary scratch outputs
+scratch/
+tmp/
+*.tmp

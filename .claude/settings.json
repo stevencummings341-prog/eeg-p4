@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Edit(data/**)",
+      "Edit(**/data/**)",
+      "Write(data/**)",
+      "Write(**/data/**)",
+      "NotebookEdit(data/**)",
+      "NotebookEdit(**/data/**)",
+      "Bash(rm *data*)",
+      "Bash(git add data*)",
+      "Bash(git add */data*)",
+      "Bash(git rm *data*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit|NotebookEdit|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/protect_data.py",
+            "timeout": 10,
+            "statusMessage": "Protecting EEG data directory"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python .claude/hooks/git_status_summary.py",
+            "timeout": 10,
+            "statusMessage": "Checking git status"
+          }
+        ]
+      }
+    ]
+  }
+}

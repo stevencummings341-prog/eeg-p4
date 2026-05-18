@@ -1,0 +1,13 @@
+{
+  "python.defaultInterpreterPath": "D:/conda/envs/eeg-p4/python.exe",
+  "python.terminal.activateEnvironment": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true
+  },
+  "python.analysis.typeCheckingMode": "basic",
+  "ruff.enable": true,
+  "jupyter.kernels.excludePythonEnvironments": [
+    "D:/conda/envs/eeg-p4/python.exe"
+  ]
+}

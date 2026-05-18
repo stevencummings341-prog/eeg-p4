@@ -1,0 +1,214 @@
+{
+  "main": {
+    "id": "432ca48f08a365c7",
+    "type": "split",
+    "children": [
+      {
+        "id": "b9c3b3de20873813",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "df446a8f7cec24dc",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "P4_EEG降噪与任务特征保真/P4_Trigger打标联调复盘.md",
+                "mode": "preview",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "P4_Trigger打标联调复盘"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "83cff32104260df1",
+    "type": "split",
+    "children": [
+      {
+        "id": "259d91086af4db43",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "38948ed982be2060",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "b839cb82201b48c5",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "b1ef0b8435852ec1",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "82b37ace4d2dd122",
+    "type": "split",
+    "children": [
+      {
+        "id": "62855676cd060103",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "0ce143fb2b502dc4",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "反向链接"
+            }
+          },
+          {
+            "id": "25341584c45d384b",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "出链"
+            }
+          },
+          {
+            "id": "af5ae06b3f6b3325",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "702e8dc63f8c2224",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "ccd67e9b608b3ad3",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "大纲"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false
+    }
+  },
+  "active": "df446a8f7cec24dc",
+  "lastOpenFiles": [
+    "P4_EEG降噪与任务特征保真/experiment/video/scratch/video_records/camera_20260518_193936_timestamps.csv",
+    "P4_EEG降噪与任务特征保真/experiment/data/P4_S3_Sub_01_20260518_194944_session3_ssvep.npz",
+    "P4_EEG降噪与任务特征保真/experiment/video/scratch/video_records/camera_20260518_193936.mp4",
+    "P4_EEG降噪与任务特征保真/experiment/video/scratch/video_records/camera_20260518_193936_metadata.json",
+    "P4_EEG降噪与任务特征保真/experiment/video/scratch/video_records/camera_20260518_193936_ffmpeg.log",
+    "P4_EEG降噪与任务特征保真/experiment/video/scratch/video_records/camera_20260518_190838_timestamps.csv",
+    "P4_EEG降噪与任务特征保真/experiment/data/P4_S3_Sub_01_20260518_193403_session3_oddball.npz",
+    "P4_EEG降噪与任务特征保真/experiment/data/P4_S2_Sub_01_20260518_192816_session2.npz",
+    "P4_EEG降噪与任务特征保真/experiment/data/P4_S1_Sub_01_20260518_191350_session1.npz",
+    "P4_EEG降噪与任务特征保真/experiment/video/scratch/video_records/camera_20260518_190838.mp4",
+    "P4_EEG降噪与任务特征保真/experiment/video/scratch/video_records/camera_20260518_190838_metadata.json",
+    "CLAUDE.md",
+    "P4_EEG降噪与任务特征保真/P4_实验操作指南.md",
+    "P4_EEG降噪与任务特征保真/P4_Trigger打标联调复盘.md",
+    "eConScan_AiO/ui/resources/battery_level/battery_4.png",
+    "eConScan_AiO/ui/resources/battery_level/battery_3.png",
+    "eConScan_AiO/ui/resources/battery_level/battery_2.png",
+    "eConScan_AiO/ui/resources/battery_level/battery_1.png",
+    "eConScan_AiO/ui/resources/app_switcher/W8_on.png",
+    "eConScan_AiO/ui/resources/app_switcher/W8_off.png",
+    "eConScan_AiO/ui/resources/app_switcher/W32_on.png",
+    "eConScan_AiO/ui/resources/app_switcher/W32_off.png",
+    "eConScan_AiO/ui/resources/app_switcher/W16_on.png",
+    "eConScan_AiO/ui/resources/app_switcher/W16_off.png",
+    "P4_EEG降噪与任务特征保真/P4_真实设备连接与正式采集指南.md",
+    "P4_EEG降噪与任务特征保真/experiment/README.md",
+    "P4_EEG降噪与任务特征保真/P4_EEG降噪与任务特征保真/paper_blueprint.md",
+    "P4_EEG降噪与任务特征保真/P4_EEG降噪与任务特征保真/experiment/README.md"
+  ]
+}
