@@ -119,7 +119,18 @@ function Invoke-GitCapture {
 #      the caller's "if ($exit -ne 0)" check meaningless.
 function Invoke-GitPassthrough {
     param([string[]] $GitArgs)
-    & git @GitArgs 2>&1 | Out-Host
+    # In PowerShell 5.x, any line a native command writes to stderr is wrapped
+    # into a System.Management.Automation.ErrorRecord and rendered as a red
+    # "NativeCommandError" by the host. Git uses stderr for progress / line-
+    # ending warnings / push receipts that are NOT actual failures, so we
+    # unwrap each record and forward it as normal host output instead.
+    & git @GitArgs 2>&1 | ForEach-Object {
+        if ($_ -is [System.Management.Automation.ErrorRecord]) {
+            Write-Host $_.Exception.Message
+        } else {
+            Write-Host $_
+        }
+    }
     return $LASTEXITCODE
 }
 
