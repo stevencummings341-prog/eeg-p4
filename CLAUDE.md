@@ -178,37 +178,75 @@ git diff -- CLAUDE.md P4_EEG降噪与任务特征保真/experiment
 - 每次修改后汇报：改了哪些文件、未提交状态、建议的下一步 commit 信息。
 - 永远禁止：`git reset --hard`、`git push --force`、`git clean -fdx`、改写已 push 历史、修改 `git config --global`。
 
-### 快速提交流程（用户说“提交”就跑下面这一条）
+### 快速提交流程（用户说"提交"就跑脚本，无需二次确认）
 
-本仓库已经把跨电脑同步流程脚本化。当用户**明确说“提交” / “同步” / “sync” / “push”**时：
+本仓库已经把跨电脑同步流程脚本化 (`scripts/sync_to_github.ps1`)，远端是 `git@github.com:stevencummings341-prog/eeg-p4.git` 的 `main` 分支。
 
-1. 直接调用脚本：
+**用户授权范围（已明确同意，不要再问）**：
+
+当用户的消息里包含下列任一**触发词**（中英不限大小写、可在句中出现）：
+
+- `提交` / `commit`
+- `推送` / `push`
+- `上传` / `upload`
+- `同步` / `sync`
+- `更新到 github` / `update github`
+- `推一下` / `推到远端`
+
+**AI 的行为约定**：
+
+1. **直接跑脚本，不要二次确认、不要"我即将……您确认吗"**：
 
    ```powershell
    .\scripts\sync_to_github.ps1
    ```
 
-   或带自定义消息：
+   如果用户在指令里带了备注 / 描述（例如"提交，备注：完成 session4 MI 流程"），把备注作为 `-Message`：
 
    ```powershell
-   .\scripts\sync_to_github.ps1 -Message "feat: session4 MI flow"
+   .\scripts\sync_to_github.ps1 -Message "feat: 完成 session4 MI 流程"
    ```
 
-2. 该脚本已经做好以下安全约束，可以放心一键跑：
-   - `git add -A` 后用脚本内置 **二次安全网** 拒绝任何 `data/`、`.bdf`、`.npz`、`.fif`、`.edf`、`.mp4` 等真实数据扩展名。
-   - 永远走当前分支（项目主分支已经是 `main`），不会切分支。
-   - 没有 remote 时只 commit 不 push，并在终端提示需要 `git remote add`。
-   - 不会做 force / reset / clean 之类破坏性动作。
+   如果用户没给备注，让脚本自己生成 `chore(sync): YYYY-MM-DD HH:mm (n files)`，**不要主动问**。
 
-3. 在脚本之外手动 `git add` / `git commit` 的场景，仍然遵守原则：**显式 add 文件，不要 `git add .` 或 `git add -A`**。脚本里的 `add -A` 之所以允许，是因为后面接了硬编码的数据扩展名拦截 + `.gitignore` 双层防护。
+2. **跑脚本之前的唯一一步检查**：先 `git status --short` 给用户一句话汇报"将提交 N 个文件，其中删除 X 个、新增 Y 个、修改 Z 个"，然后立即跑脚本。这一步只是让用户能取消，不需要等他回复。
 
-4. 如果脚本 push 失败（网络/SSH 鉴权 etc.）：
-   - 不要重新 commit；commit 已经在本地。
-   - 报告原因，让用户修网络或 auth，再让用户说一次"提交"，AI 重新跑脚本最后阶段：
+3. **跑脚本之后的汇报模板**（保持简短）：
 
-     ```powershell
-     git push -u origin main
-     ```
+   ```text
+   ✅ commit <短hash> · pushed to origin/main
+   N files (M added, M modified, M deleted)
+   ```
+
+   失败时：
+
+   ```text
+   ⚠️ commit 已在本地 <短hash>，push 失败：<原因摘要>
+   建议：检查网络/SSH，然后再说"提交"我重试 push。
+   ```
+
+4. **脚本的安全约束（已硬编码，可以信任）**：
+   - 内置数据保护：任何 path 含 `/data/` 或扩展名属于 `{bdf, npz, fif, edf, mp4, set, cnt, vhdr, vmrk, eeg, mat}` 一律拒绝 stage，退出码 2。
+   - 永远走当前分支（`main`），不会切分支。
+   - 永远不做 `reset --hard` / `push --force` / `clean` / `amend` 已 push 的 commit。
+   - 没有 remote 时只 commit 不 push，并提示。
+
+5. **下面这些情况仍然必须先问用户**（"提交"不覆盖这些）：
+   - 用户说 `git reset` / `回滚` / `revert` / `撤销 commit`
+   - 用户说 `force push` / `强制 push` / `改写历史`
+   - push 失败后想用 `git reset --soft HEAD~` 重整 commit
+   - 看到 `git status` 里有意外的大量删除（例如超过 50 个 D 项），先列给用户确认，再跑脚本
+   - 即将提交的内容里包含 `data/` 路径或数据扩展名 — 这种情况脚本会自动拒绝，但 AI 也应当先提示用户"看起来有数据文件，是不是 .gitignore 漏了"
+
+6. **如果用户在脚本之外手动让你 `git add` / `git commit`**：仍然遵守原则——**显式 add 文件**，不要 `git add .` 或 `git add -A`。脚本里的 `add -A` 之所以允许，是因为后面接了硬编码的数据扩展名拦截 + `.gitignore` 双层防护，构成了用户对它的明确授权。
+
+7. **PowerShell 调用方式**：在 Cursor / Claude Code 的 shell 工具里调用脚本时，**直接** `.\scripts\sync_to_github.ps1`，不要用 `powershell -File ...` 起子进程（会触发 codepage / encoding 坑）。当前 shell 已经是 PowerShell。
+
+8. **如果该脚本本身被改坏了**（罕见）：仍然可以回退到最小手工流程，但要遵守 8.1-8.3：
+   - 8.1 显式 `git add <文件1> <文件2> ...`，不要 `git add .`
+   - 8.2 `git commit -m "<message>"`
+   - 8.3 `git push origin main`
+   并且回头修脚本。
 
 ## Claude Code 工作流程
 
