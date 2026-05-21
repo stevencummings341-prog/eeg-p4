@@ -111,9 +111,15 @@ function Invoke-GitCapture {
 # ----- helper: run git with stdout/stderr going straight to console -----
 # Use this for commands that produce lots of output (add / push) or where we
 # only care about the exit code. Returns just the exit code.
+#
+# IMPORTANT: redirect stderr into stdout (2>&1) then pipe to Out-Host so that:
+#   1. the user sees git's progress in real time;
+#   2. neither stdout nor stderr leaks into PowerShell's pipeline, which
+#      would otherwise contaminate the function's return value and make
+#      the caller's "if ($exit -ne 0)" check meaningless.
 function Invoke-GitPassthrough {
     param([string[]] $GitArgs)
-    & git @GitArgs
+    & git @GitArgs 2>&1 | Out-Host
     return $LASTEXITCODE
 }
 
