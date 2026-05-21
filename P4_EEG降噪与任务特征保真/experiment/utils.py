@@ -405,9 +405,17 @@ def save_data(cfg, session_data: dict, suffix: str = ""):
     config_json = json.dumps({
         "subject_id": cfg.subject_id,
         "session": cfg.session,
-        "natural_mode": cfg.natural_mode,
         "session_order": cfg.session_order,
         "exp_timestamp": cfg.exp_timestamp,
+        "mi_baseline_duration": getattr(cfg, "mi_baseline_duration", None),
+        "mi_cue_duration": getattr(cfg, "mi_cue_duration", None),
+        "mi_imagery_duration": getattr(cfg, "mi_imagery_duration", None),
+        "mi_rest_duration": getattr(cfg, "mi_rest_duration", None),
+        "mi_demo_trials_per_class": getattr(cfg, "mi_demo_trials_per_class", None),
+        "mi_practice_trials_per_class": getattr(cfg, "mi_practice_trials_per_class", None),
+        "mi_formal_trials_per_class": getattr(cfg, "mi_formal_trials_per_class", None),
+        "mi_formal_blocks": getattr(cfg, "mi_formal_blocks", None),
+        "mi_random_seed": getattr(cfg, "mi_random_seed", None),
     }, ensure_ascii=False)
 
     # 保存

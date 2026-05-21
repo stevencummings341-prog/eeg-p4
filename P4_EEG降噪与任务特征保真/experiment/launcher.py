@@ -11,6 +11,7 @@
 
 import sys
 import os
+from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import tkinter as tk
@@ -19,6 +20,7 @@ import subprocess
 import traceback
 
 from config import ExperimentConfig, ExperimentLauncher, MARKER_TABLE
+from video.camera_recorder_controlled import FFmpegCameraRecorder
 
 TASK_BASELINE_DURATION = 60.0
 
@@ -31,6 +33,22 @@ def cleanup_all():
         _cleanup_all()
     except Exception:
         pass
+
+
+def get_camera_output_dir(cfg: ExperimentConfig) -> Path:
+    if cfg.camera_output_dir:
+        return Path(cfg.camera_output_dir)
+    return Path(cfg.data_dir) / "video_records"
+
+
+def create_camera_recorder(cfg: ExperimentConfig) -> FFmpegCameraRecorder:
+    return FFmpegCameraRecorder(
+        device_name=cfg.camera_device_name,
+        width=cfg.camera_width,
+        height=cfg.camera_height,
+        fps=cfg.camera_fps,
+        output_dir=get_camera_output_dir(cfg),
+    )
 
 
 # ============================================================
@@ -119,31 +137,17 @@ def run_session_safe(cfg: ExperimentConfig, session_num: str):
                 run_ssvep(cfg)
 
         elif session_num == "4":
-            from session3_oddball import run_oddball
-            from session3_ssvep import run_ssvep
-            # Session 4: 自然态 (重跑 Oddball + SSVEP, 使用 S4 独立 8-bit Marker)
-            cfg.natural_mode = True
+            from session4_mi import run_session4
 
-            if cfg.run_oddball:
-                print("\n" + "="*60)
-                print("  Session 4 (自然态) — 任务 4.1: 视觉 Oddball")
-                print("="*60 + "\n")
-                run_oddball(cfg)
-
-            if cfg.run_ssvep:
-                # run_oddball 末尾会 cleanup_all() 关闭 COM3, 但 Windows 串口驱动
-                # 有 ~100-300ms 的释放延迟, 立刻新建 TriggerSender 会撞 "Access denied"。
-                from psychopy import core as _core
-                _core.wait(0.5)
-                print("\n" + "="*60)
-                print("  Session 4 (自然态) — 任务 4.2: SSVEP")
-                print("="*60 + "\n")
-                run_ssvep(cfg)
+            print("\n" + "="*60)
+            print("  Session 4 — 离线双手运动想象采集")
+            print("="*60 + "\n")
+            run_session4(cfg)
 
     except SystemExit:
         pass
     except Exception as e:
-        print(f"\n❌ Session {session_num} 异常: {e}")
+        print(f"\nSession {session_num} 异常: {e}")
         traceback.print_exc()
     finally:
         cleanup_all()
@@ -168,11 +172,11 @@ def run_full_experiment(cfg: ExperimentConfig):
     if order == "3_then_4":
         session_sequence += [
             ("3", "Session 3 — 银标准任务态 (~19 min)"),
-            ("4", "Session 4 — 自然态测试集 (~18 min)"),
+            ("4", "Session 4 — 离线双手 MI 采集 (~12-18 min)"),
         ]
     else:  # "4_then_3" — 反向平衡
         session_sequence += [
-            ("4", "Session 4 — 自然态测试集 (~18 min)"),
+            ("4", "Session 4 — 离线双手 MI 采集 (~12-18 min)"),
             ("3", "Session 3 — 银标准任务态 (~19 min)"),
         ]
 
@@ -185,11 +189,6 @@ def run_full_experiment(cfg: ExperimentConfig):
 
         # 更新 session 号
         cfg.session = sess_num
-        if sess_num == "4":
-            cfg.natural_mode = True
-        else:
-            cfg.natural_mode = False
-
         run_session_safe(cfg, sess_num)
 
         if idx < total_sessions - 1:
@@ -253,7 +252,11 @@ class ProgressWindow:
 # 入口
 # ============================================================
 
-if __name__ == "__main__":
+def main() -> int:
+    recorder = None
+    camera_started = False
+    exit_code = 0
+
     try:
         if len(sys.argv) > 1:
             from config import config_from_args
@@ -265,14 +268,37 @@ if __name__ == "__main__":
 
             if cfg is None:
                 print("实验被用户取消。")
-                sys.exit(0)
+                return 0
+
+        camera_output_dir = get_camera_output_dir(cfg).resolve()
 
         print("\n" + "="*60)
         print(f"  P4 EEG 降噪实验")
         print(f"  被试: {cfg.subject_id}")
         print(f"  Session: {cfg.session}")
         print(f"  串口: {'无硬件' if cfg.no_hardware else cfg.port_name}")
+        print(f"  相机: {'启用' if cfg.camera_enabled else '禁用'}")
+        if cfg.camera_enabled:
+            print(f"  相机设备: {cfg.camera_device_name}")
+            print(f"  视频保存: {camera_output_dir}")
         print("="*60 + "\n")
+
+        if cfg.camera_enabled:
+            print("[Camera] 正在启动相机录制...")
+            recorder = create_camera_recorder(cfg)
+            try:
+                video_path, timestamp_path, metadata_path = recorder.start()
+            except Exception as camera_error:
+                print(f"\n相机启动失败: {camera_error}")
+                if recorder.log_path is not None:
+                    print(f"[Camera] FFmpeg 日志: {recorder.log_path.resolve()}")
+                return 1
+            camera_started = True
+            print(f"[Camera] 已开始录制: {video_path.resolve()}")
+            print(f"[Camera] 时间戳文件: {timestamp_path.resolve()}")
+            print(f"[Camera] Metadata: {metadata_path.resolve()}")
+        else:
+            print("[Camera] 已禁用，跳过录像。")
 
         if cfg.session == "all":
             # 完整流程
@@ -286,8 +312,26 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n\n>>> 实验被用户中断 (Ctrl+C) <<<")
     except Exception as e:
-        print(f"\n❌ 启动器异常: {e}")
+        exit_code = 1
+        print(f"\n启动器异常: {e}")
         traceback.print_exc()
     finally:
+        if camera_started and recorder is not None:
+            try:
+                print("\n[Camera] 正在停止相机录制...")
+                result = recorder.stop()
+                print("[Camera] 录制已停止。")
+                print(f"[Camera] 视频: {result['video_path']}")
+                print(f"[Camera] 时间戳: {result['timestamp_path']}")
+                print(f"[Camera] Metadata: {result['metadata_path']}")
+                print(f"[Camera] FFmpeg 日志: {result['log_path']}")
+            except Exception as camera_error:
+                print(f"⚠️ [Camera] 停止录制失败: {camera_error}")
         cleanup_all()
         print("\n实验程序已退出。")
+
+    return exit_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

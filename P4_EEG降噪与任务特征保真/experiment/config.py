@@ -33,7 +33,7 @@ class ExperimentConfig:
     run_ssvep: bool = True
 
     # 串口 (Trigger / Marker 发送)
-    port_name: str = "COM3"
+    port_name: str = "COM5"
     baud_rate: int = 115200
     no_hardware: bool = False
 
@@ -52,9 +52,24 @@ class ExperimentConfig:
     # 数据保存路径
     data_dir: str = ""
 
-    # Session 4 特有 — 自然态模式
-    natural_mode: bool = False
-    forced_blink_ratio: float = 0.3
+    # 相机录制
+    camera_enabled: bool = True
+    camera_device_name: str = "FF-Camera"
+    camera_output_dir: str = ""
+    camera_width: int = 1920
+    camera_height: int = 1080
+    camera_fps: float = 30.0
+
+    # Session 4 — 离线双手运动想象
+    mi_baseline_duration: float = 2.0
+    mi_cue_duration: float = 1.0
+    mi_imagery_duration: float = 4.0
+    mi_rest_duration: float = 2.0
+    mi_demo_trials_per_class: int = 5
+    mi_practice_trials_per_class: int = 5
+    mi_formal_trials_per_class: int = 40
+    mi_formal_blocks: int = 4
+    mi_random_seed: int = 42
     ssvep_grid_debug: bool = False
 
     # 被试间顺序平衡 (Session 3 vs 4 顺序)
@@ -104,13 +119,16 @@ MARKER_TABLE = {
     "S3_SSVEP_10HZ":       73,
     "S3_SSVEP_15HZ":       74,
 
-    # Session 4 — 自然态 (<128)
-    "S4_ODDBALL_STD":      81,
-    "S4_ODDBALL_TARGET":   82,
-    "S4_SSVEP_6HZ":        91,
-    "S4_SSVEP_8_57HZ":     92,
-    "S4_SSVEP_10HZ":       93,
-    "S4_SSVEP_15HZ":       94,
+    # Session 4 — 离线双手运动想象 (<128)
+    "S4_MI_DEMO_LEFT":        81,
+    "S4_MI_DEMO_RIGHT":       82,
+    "S4_MI_FORMAL_LEFT_CUE":  83,
+    "S4_MI_FORMAL_RIGHT_CUE": 84,
+    "S4_MI_FORMAL_LEFT":      85,
+    "S4_MI_FORMAL_RIGHT":     86,
+    "S4_MI_REST":             87,
+    "S4_MI_BLOCK_START":      88,
+    "S4_MI_BLOCK_END":        89,
 }
 
 
@@ -146,7 +164,7 @@ class ExperimentLauncher:
         """显示 GUI 并等待用户完成配置。返回 Config 或 None (取消)"""
         self.root = tk.Tk()
         self.root.title("P4 EEG 降噪实验 — 启动配置")
-        self.root.geometry("580x650")
+        self.root.geometry("680x780")
         self.root.resizable(False, False)
 
         # 居中
@@ -186,11 +204,11 @@ class ExperimentLauncher:
         self.var_session = tk.StringVar(value="1")
         session_frame = ttk.Frame(row2)
         session_frame.pack(side=tk.LEFT, padx=5)
-        for s, label in [("1", "S1 静息态"), ("2", "S2 伪迹模板"), ("3", "S3 银标准"), ("4", "S4 自然态"), ("all", "全流程 S1-S4")]:
+        for s, label in [("1", "S1 静息态"), ("2", "S2 伪迹模板"), ("3", "S3 银标准"), ("4", "S4 双手 MI"), ("all", "全流程 S1-S4")]:
             ttk.Radiobutton(session_frame, text=label, variable=self.var_session,
                            value=s).pack(side=tk.LEFT, padx=3)
 
-        # Session 3/4 任务选择
+        # Session 3 任务选择
         row2b = ttk.Frame(main_frame)
         row2b.pack(fill=tk.X, pady=2)
         ttk.Label(row2b, text="任务选择:", width=12).pack(side=tk.LEFT)
@@ -205,7 +223,7 @@ class ExperimentLauncher:
         row3 = ttk.Frame(main_frame)
         row3.pack(fill=tk.X, pady=2)
         ttk.Label(row3, text="串口号:", width=12).pack(side=tk.LEFT)
-        self.var_port = tk.StringVar(value="COM3")
+        self.var_port = tk.StringVar(value="COM5")
         ttk.Entry(row3, textvariable=self.var_port, width=15).pack(side=tk.LEFT, padx=5)
         self.var_no_hw = tk.BooleanVar(value=False)
         ttk.Checkbutton(row3, text="无硬件模式 (不发送 Trigger)",
@@ -249,15 +267,47 @@ class ExperimentLauncher:
         ttk.Entry(row5, textvariable=self.var_data_dir, width=35).pack(side=tk.LEFT, padx=5)
         ttk.Button(row5, text="浏览...", command=self._browse_data_dir, width=6).pack(side=tk.LEFT)
 
-        # ---- Session 4 选项 ----
-        ttk.Label(main_frame, text="▌ Session 4 选项", font=("Microsoft YaHei", 11, "bold")).pack(anchor=tk.W, pady=(15, 5))
+        # ---- 相机录制 ----
+        ttk.Label(main_frame, text="▌ 相机录制", font=("Microsoft YaHei", 11, "bold")).pack(anchor=tk.W, pady=(15, 5))
+
+        row5b = ttk.Frame(main_frame)
+        row5b.pack(fill=tk.X, pady=2)
+        self.var_camera_enabled = tk.BooleanVar(value=True)
+        ttk.Checkbutton(row5b, text="启用相机自动录制", variable=self.var_camera_enabled).pack(side=tk.LEFT)
+
+        row5c = ttk.Frame(main_frame)
+        row5c.pack(fill=tk.X, pady=2)
+        ttk.Label(row5c, text="设备名:", width=12).pack(side=tk.LEFT)
+        self.var_camera_device = tk.StringVar(value="FF-Camera")
+        ttk.Entry(row5c, textvariable=self.var_camera_device, width=35).pack(side=tk.LEFT, padx=5)
+
+        row5d = ttk.Frame(main_frame)
+        row5d.pack(fill=tk.X, pady=2)
+        ttk.Label(row5d, text="视频保存:", width=12).pack(side=tk.LEFT)
+        ttk.Label(row5d, text="默认保存到 <保存目录>/video_records").pack(side=tk.LEFT)
+
+        # ---- Session 4 (MI) 选项 ----
+        ttk.Label(main_frame, text="▌ Session 4 (MI) 选项", font=("Microsoft YaHei", 11, "bold")).pack(anchor=tk.W, pady=(15, 5))
 
         row6 = ttk.Frame(main_frame)
         row6.pack(fill=tk.X, pady=2)
-        self.var_forced_blink = tk.StringVar(value="0.3")
-        ttk.Label(row6, text="强制眨眼比例:", width=16).pack(side=tk.LEFT)
-        ttk.Entry(row6, textvariable=self.var_forced_blink, width=6).pack(side=tk.LEFT, padx=5)
-        ttk.Label(row6, text="(0=不强制, 0.3=30%靶刺激强制眨眼)").pack(side=tk.LEFT)
+        self.var_mi_baseline = tk.StringVar(value="2.0")
+        self.var_mi_cue = tk.StringVar(value="1.0")
+        self.var_mi_imagery = tk.StringVar(value="4.0")
+        self.var_mi_rest = tk.StringVar(value="2.0")
+        for label, var in [("基线", self.var_mi_baseline), ("Cue", self.var_mi_cue), ("想象", self.var_mi_imagery), ("休息", self.var_mi_rest)]:
+            ttk.Label(row6, text=f"{label}:").pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Entry(row6, textvariable=var, width=6).pack(side=tk.LEFT, padx=(0, 10))
+
+        row6b = ttk.Frame(main_frame)
+        row6b.pack(fill=tk.X, pady=2)
+        self.var_mi_demo = tk.StringVar(value="5")
+        self.var_mi_practice = tk.StringVar(value="5")
+        self.var_mi_formal = tk.StringVar(value="40")
+        self.var_mi_blocks = tk.StringVar(value="4")
+        for label, var in [("示范/类", self.var_mi_demo), ("练习/类", self.var_mi_practice), ("正式/类", self.var_mi_formal), ("正式 blocks", self.var_mi_blocks)]:
+            ttk.Label(row6b, text=f"{label}:").pack(side=tk.LEFT, padx=(0, 4))
+            ttk.Entry(row6b, textvariable=var, width=6).pack(side=tk.LEFT, padx=(0, 10))
 
         # ---- 被试间顺序平衡 ----
         row7 = ttk.Frame(main_frame)
@@ -301,8 +351,16 @@ class ExperimentLauncher:
             cfg.screen_height = int(self.var_height.get())
 
             cfg.data_dir = self.var_data_dir.get().strip()
-            cfg.natural_mode = (cfg.session == "4")
-            cfg.forced_blink_ratio = float(self.var_forced_blink.get())
+            cfg.camera_enabled = self.var_camera_enabled.get()
+            cfg.camera_device_name = self.var_camera_device.get().strip() or cfg.camera_device_name
+            cfg.mi_baseline_duration = float(self.var_mi_baseline.get())
+            cfg.mi_cue_duration = float(self.var_mi_cue.get())
+            cfg.mi_imagery_duration = float(self.var_mi_imagery.get())
+            cfg.mi_rest_duration = float(self.var_mi_rest.get())
+            cfg.mi_demo_trials_per_class = int(self.var_mi_demo.get())
+            cfg.mi_practice_trials_per_class = int(self.var_mi_practice.get())
+            cfg.mi_formal_trials_per_class = int(self.var_mi_formal.get())
+            cfg.mi_formal_blocks = int(self.var_mi_blocks.get())
             cfg.session_order = self.var_order.get()
 
             self.config = cfg
@@ -332,12 +390,23 @@ def config_from_args() -> ExperimentConfig:
     parser.add_argument("--session", default="1", choices=["1", "2", "3", "4", "all"])
     parser.add_argument("--no-oddball", action="store_true", help="跳过 Oddball")
     parser.add_argument("--no-ssvep", action="store_true", help="跳过 SSVEP")
-    parser.add_argument("--port", default="COM3", help="串口号")
+    parser.add_argument("--port", default="COM5", help="串口号")
     parser.add_argument("--no-hardware", action="store_true", help="无硬件模式")
     parser.add_argument("--screen", type=int, default=1)
     parser.add_argument("--windowed", action="store_true", help="窗口模式")
     parser.add_argument("--data-dir", default="data")
-    parser.add_argument("--forced-blink", type=float, default=0.3)
+    parser.add_argument("--no-camera", action="store_true", help="禁用相机自动录制")
+    parser.add_argument("--camera-device", default="FF-Camera", help="FFmpeg / dshow 相机设备名")
+    parser.add_argument("--camera-output-dir", default="", help="相机录制保存目录，默认使用 <data_dir>/video_records")
+    parser.add_argument("--mi-baseline-duration", type=float, default=2.0)
+    parser.add_argument("--mi-cue-duration", type=float, default=1.0)
+    parser.add_argument("--mi-imagery-duration", type=float, default=4.0)
+    parser.add_argument("--mi-rest-duration", type=float, default=2.0)
+    parser.add_argument("--mi-demo-trials-per-class", type=int, default=5)
+    parser.add_argument("--mi-practice-trials-per-class", type=int, default=5)
+    parser.add_argument("--mi-formal-trials-per-class", type=int, default=40)
+    parser.add_argument("--mi-formal-blocks", type=int, default=4)
+    parser.add_argument("--mi-seed", type=int, default=42)
     parser.add_argument("--ssvep-grid-debug", action="store_true", help="SSVEP 四宫格持续闪烁调试模式")
 
     args = parser.parse_args()
@@ -352,8 +421,18 @@ def config_from_args() -> ExperimentConfig:
     cfg.screen_id = args.screen
     cfg.full_screen = True if cfg.screen_id == 1 else (not args.windowed)
     cfg.data_dir = args.data_dir
-    cfg.natural_mode = (cfg.session == "4")
-    cfg.forced_blink_ratio = args.forced_blink
+    cfg.camera_enabled = not args.no_camera
+    cfg.camera_device_name = args.camera_device
+    cfg.camera_output_dir = args.camera_output_dir
+    cfg.mi_baseline_duration = args.mi_baseline_duration
+    cfg.mi_cue_duration = args.mi_cue_duration
+    cfg.mi_imagery_duration = args.mi_imagery_duration
+    cfg.mi_rest_duration = args.mi_rest_duration
+    cfg.mi_demo_trials_per_class = args.mi_demo_trials_per_class
+    cfg.mi_practice_trials_per_class = args.mi_practice_trials_per_class
+    cfg.mi_formal_trials_per_class = args.mi_formal_trials_per_class
+    cfg.mi_formal_blocks = args.mi_formal_blocks
+    cfg.mi_random_seed = args.mi_seed
     cfg.ssvep_grid_debug = args.ssvep_grid_debug
 
     return cfg

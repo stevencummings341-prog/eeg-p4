@@ -24,7 +24,7 @@ D:\EEG_Project
 ├── CLAUDE.md                         # Claude Code 项目规则
 ├── .obsidian/                        # Obsidian vault 配置
 ├── .agents/skills/                   # Obsidian Agent Skills
-├── .claude/                          # Claude Code 项目配置与 hooks
+├── .claude/                          # Claude Code 项目配置、hooks 与 project-local skills
 └── P4_EEG降噪与任务特征保真/
     ├── proposal.md                   # P4 采集与训练方案主文档
     ├── paper_blueprint.md            # Paper 1 论文蓝图
@@ -43,11 +43,10 @@ D:\EEG_Project
 
 ### 实验采集
 
-- Python 3.9+
-- PsychoPy：刺激呈现、窗口、键盘、声音。
-- pyserial：Trigger/Marker 串口发送。
-- NumPy：实验事件和配置保存。
-- tkinter：图形化启动配置。
+- `python` / `conda` / `pip`：实验运行与环境恢复。
+- `ffmpeg`：相机录制脚本与视频后处理依赖。
+- `Obsidian`：知识库与实验日志整理。
+- `VS Code`：建议把解释器指向当前机器实际的 `eeg-p4` 环境，而不是沿用旧电脑路径。
 
 ### EEG 数据处理与建模规划
 
@@ -88,6 +87,13 @@ conda activate eeg-p4
 python -m pip install -r requirements.txt
 ```
 
+### 迁移到新电脑后的恢复要点
+
+- 优先确认 Miniconda / Anaconda 可用，再创建 `eeg-p4` 环境。
+- 若 VS Code 沿用旧电脑解释器路径，需手动改为当前机器实际的 `.../envs/eeg-p4/python.exe`。
+- `Obsidian`、`ffmpeg`、相机驱动与串口驱动属于机器本地依赖，换机后要单独确认。
+- 任何无硬件 smoke test 优先使用 `--windowed --no-hardware --screen 0`，避免把显示器和触发器问题混进代码问题。
+
 ### 启动 GUI
 
 ```bash
@@ -127,15 +133,15 @@ git diff -- CLAUDE.md P4_EEG降噪与任务特征保真/experiment
 | --- | --- | --- |
 | S1 静息态 | 干净脑电底色，Alpha 阻断验证 | 11/12, 21/22 |
 | S2 伪迹模板 | 独立眼电/肌电噪声库 | 30/31, 41-45 |
-| S3 银标准任务态 | 干净任务信号 Ground Truth | Oddball 100/200, SSVEP 126/128/130/140 |
-| S4 自然污染测试 | 最终真实噪声测试集 | S3 Marker + 1000 |
+| S3 银标准任务态 | 干净任务信号 Ground Truth | Oddball 61/62, 基线 63, SSVEP 71/72/73/74 |
+| S4 自然污染测试 | 最终真实噪声测试集 | Oddball 81/82, SSVEP 91/92/93/94 |
 
 关键设计原则：
 
 - S2 只截取 Marker 31 后的伪迹动作，排除 Marker 30 按键带来的运动电位。
 - S3 刺激窗口严禁眨眼，保留干净 P300/SSVEP/Alpha 特征。
 - S4 重复 S3 任务但允许自然眨眼/面部动作，用作最终考卷。
-- S4 所有 Marker 必须 +1000，避免与 S3 混淆。
+- S4 使用独立的 8-bit Marker（81/82/91-94），与 S3 明确区分，并保持与 iRecorder 单字节 Trigger 协议兼容。
 
 ## 代码风格要求
 
@@ -166,11 +172,43 @@ git diff -- CLAUDE.md P4_EEG降噪与任务特征保真/experiment
 
 ### Git 与版本管理安全
 
-- 不要自动 `git commit`、`git push`、`git reset --hard`、`git clean`、`git checkout --`、`git restore` 或改写历史。
+- 不要在没有用户指令的前提下自动 `git commit`、`git push`、`git reset --hard`、`git clean`、`git checkout --`、`git restore` 或改写历史。
 - 用户要求“自动版本管理”时，本项目解释为：每次工作前后自动/主动检查 git 状态、保护数据目录、汇报变更；不是擅自提交或推送。
-- 只有用户明确说“提交/commit”时，才创建 commit；只 stage 本次相关文件，不使用 `git add .` 或 `git add -A`。
 - 每次修改前先看 `git status --short`，识别用户已有改动；不要覆盖不属于本次任务的文件。
 - 每次修改后汇报：改了哪些文件、未提交状态、建议的下一步 commit 信息。
+- 永远禁止：`git reset --hard`、`git push --force`、`git clean -fdx`、改写已 push 历史、修改 `git config --global`。
+
+### 快速提交流程（用户说“提交”就跑下面这一条）
+
+本仓库已经把跨电脑同步流程脚本化。当用户**明确说“提交” / “同步” / “sync” / “push”**时：
+
+1. 直接调用脚本：
+
+   ```powershell
+   .\scripts\sync_to_github.ps1
+   ```
+
+   或带自定义消息：
+
+   ```powershell
+   .\scripts\sync_to_github.ps1 -Message "feat: session4 MI flow"
+   ```
+
+2. 该脚本已经做好以下安全约束，可以放心一键跑：
+   - `git add -A` 后用脚本内置 **二次安全网** 拒绝任何 `data/`、`.bdf`、`.npz`、`.fif`、`.edf`、`.mp4` 等真实数据扩展名。
+   - 永远走当前分支（项目主分支已经是 `main`），不会切分支。
+   - 没有 remote 时只 commit 不 push，并在终端提示需要 `git remote add`。
+   - 不会做 force / reset / clean 之类破坏性动作。
+
+3. 在脚本之外手动 `git add` / `git commit` 的场景，仍然遵守原则：**显式 add 文件，不要 `git add .` 或 `git add -A`**。脚本里的 `add -A` 之所以允许，是因为后面接了硬编码的数据扩展名拦截 + `.gitignore` 双层防护。
+
+4. 如果脚本 push 失败（网络/SSH 鉴权 etc.）：
+   - 不要重新 commit；commit 已经在本地。
+   - 报告原因，让用户修网络或 auth，再让用户说一次"提交"，AI 重新跑脚本最后阶段：
+
+     ```powershell
+     git push -u origin main
+     ```
 
 ## Claude Code 工作流程
 

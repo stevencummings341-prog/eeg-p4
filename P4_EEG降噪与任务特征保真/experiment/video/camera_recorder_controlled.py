@@ -10,18 +10,16 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 
-import cv2
-
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-DEFAULT_OUTPUT_DIR = SCRIPT_DIR / "scratch" / "video_records"
+DEFAULT_OUTPUT_DIR = (SCRIPT_DIR / ".." / "data" / "video_records").resolve()
 
 
 @dataclass
 class FFmpegCameraRecorder:
-    device_name: str = "Logi C310 HD WebCam"
-    width: int = 1280
-    height: int = 720
+    device_name: str = "FF-Camera"
+    width: int = 1920
+    height: int = 1080
     fps: float = 30.0
     output_dir: Path = DEFAULT_OUTPUT_DIR
     prefix: str = "camera"
@@ -150,6 +148,11 @@ class FFmpegCameraRecorder:
         return result
 
     def _read_video_info(self) -> tuple[int, float]:
+        try:
+            import cv2
+        except ImportError:
+            return 0, self.fps
+
         cap = cv2.VideoCapture(str(self.video_path))
         try:
             frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
