@@ -1,0 +1,51 @@
+{
+  "description": "Session 4 情绪识别实验 — 音视频刺激配置 (scheme=\"emotion\")",
+  "_note": "videos 列表是「候选清单」(按出现优先级排序)。session4_emotion.py 会按顺序取出前 N 个存在于磁盘上的文件作为正式刺激；缺失的会跳过并取后面那个候补。所以多放几个文件是安全的。",
+  "categories": {
+    "negative": {
+      "label": "负性",
+      "marker": 101,
+      "videos": [
+        "negative/1942_clip_1.mp4",
+        "negative/1942_clip_2.mp4",
+        "negative/1942_clip_3.mp4",
+        "negative/1942_clip_4.mp4",
+        "negative/1942_clip_5.mp4",
+        "negative/唐山大地震_clip1.mp4",
+        "negative/唐山大地震_clip2.mp4"
+      ]
+    },
+    "neutral": {
+      "label": "中性",
+      "marker": 102,
+      "videos": [
+        "neutral/舌尖clip_1.mp4",
+        "neutral/舌尖clip_2.mp4",
+        "neutral/舌尖clip_3.mp4",
+        "neutral/舌尖clip_4.mp4",
+        "neutral/遗产1.mp4",
+        "neutral/遗产clip_2.mp4",
+        "neutral/遗产clip_3.mp4"
+      ]
+    },
+    "positive": {
+      "label": "正性",
+      "marker": 103,
+      "videos": [
+        "positive/冰雪奇缘_clip1.mp4",
+        "positive/冰雪奇缘_clip2.mp4",
+        "positive/宝贝计划_clip1.mp4",
+        "positive/宝贝计划_clip2.mp4",
+        "positive/山楂树之恋_clip1.mp4",
+        "positive/那些年_clip1.mp4",
+        "positive/龙猫_clip1.mp4"
+      ]
+    }
+  },
+  "trial_settings": {
+    "trials_per_category": 6,
+    "pre_stimulus_fixation_s": 2.0,
+    "post_stimulus_rest_s": 2.0,
+    "randomize_order": true
+  }
+}

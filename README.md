@@ -22,7 +22,7 @@ EEG_Project/
 ├── eConScan_AiO/                       三方 EEG 采集软件（gitignore，机器本地）
 ├── iRecorder W32产品光盘/              iRecorder 设备 SDK / 驱动（gitignore，机器本地）
 │
-└── P4_EEG降噪与任务特征保真/           P4 主体（见其下 README.md）
+└── P4_EEG/           P4 主体（见其下 README.md）
     ├── README.md
     ├── dataset/                        预留：清洗后可发布的数据集导出位置
     ├── experiment/                     S1–S4 采集 + 相机录制 + 视频动作提取
@@ -33,7 +33,7 @@ EEG_Project/
 
 | 路径 | 角色 | 是否入库 |
 |:---|:---|:---|
-| `P4_EEG降噪与任务特征保真/` | 全部自研代码、采集脚本、分析工具、下游 Demo | 是 |
+| `P4_EEG/` | 全部自研代码、采集脚本、分析工具、下游 Demo | 是 |
 | `eConScan_AiO/` | 三方采集软件（图形化记录 EEG） | 否（gitignore） |
 | `iRecorder W32产品光盘/` | iRecorder 32 通道设备 SDK / 驱动 / 文档 | 否（gitignore） |
 | `**/data/`, `**/*.bdf` 等 | 真实采集数据 | **永不入库，永不修改** |
@@ -42,10 +42,10 @@ EEG_Project/
 
 | 你想做 | 入口 |
 |:---|:---|
-| 跑一次 4-Session 采集 | `cd P4_EEG降噪与任务特征保真/experiment && python launcher.py` |
-| 仅跑离线双手 MI（在线小车前置采集） | `cd P4_EEG降噪与任务特征保真/p8_mi_car/experiment && python launcher.py` |
-| 对录制的相机视频跑 YOLO+面部动作分析 | 双击 `P4_EEG降噪与任务特征保真/experiment/video/video_action_tool/run_gui.bat` |
-| 配置 / 修复视频工具环境 | `P4_EEG降噪与任务特征保真/experiment/video/` 下的 `install_env_conda.bat` 等 |
+| 跑一次 4-Session 采集 | `cd P4_EEG/experiment && python launcher.py` |
+| 仅跑离线双手 MI（在线小车前置采集） | `cd P4_EEG/p8_mi_car/experiment && python launcher.py` |
+| 对录制的相机视频跑 YOLO+面部动作分析 | 双击 `P4_EEG/experiment/video/video_action_tool/run_gui.bat` |
+| 配置 / 修复视频工具环境 | `P4_EEG/experiment/video/` 下的 `install_env_conda.bat` 等 |
 
 ## 设计原则速记
 

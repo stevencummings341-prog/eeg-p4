@@ -30,7 +30,7 @@ data/
 # Project-level Claude settings that ARE meant to sync across machines
 # (these are exceptions: same file name, but lives inside a subproject we
 # explicitly want versioned — see MIGRATION.md §4.2)
-!P4_EEG降噪与任务特征保真/p8_mi_car/.claude/settings.local.json
+!P4_EEG/p8_mi_car/.claude/settings.local.json
 
 # Vendor / local device bundles (do not version)
 eConScan_AiO/
@@ -44,6 +44,13 @@ iRecorder*/
 scratch/
 tmp/
 *.tmp
+
+# Pipeline 衍生产物（含被试预处理 raw / epochs / 特征 / QC HTML，与 data/ 同隐私级别）
+derivatives/
+**/derivatives/
+
+# 视频动作提取产物 (parquet / events.csv / preview mp4 等)，可重跑，不入库
+**/analysis_outputs/
 
 # Obsidian per-machine UI state (not the vault config)
 .obsidian/workspace.json

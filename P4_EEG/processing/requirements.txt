@@ -1,0 +1,10 @@
+# P4 EEG 后处理 pipeline 依赖。
+# 项目级 conda 环境 `eeg-p4` 默认已经装好 mne / numpy / scipy / matplotlib，
+# 这里只列出 pipeline 额外需要的 / 容易漏装的依赖。
+mne>=1.10
+numpy>=1.22
+scipy>=1.8
+matplotlib>=3.5
+pandas>=1.4
+# 合成测试数据写 EDF 用
+edfio>=0.4

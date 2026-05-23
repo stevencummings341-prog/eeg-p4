@@ -13,30 +13,52 @@
 
 主要参考文件：
 
-1. `P4_EEG降噪与任务特征保真/proposal.md` — 采集 SOP、Marker、被试流程、数据流。
-2. `P4_EEG降噪与任务特征保真/experiment/README.md` — 实验代码运行方式。
-3. `P4_EEG降噪与任务特征保真/paper_blueprint.md` — 论文叙事、实验矩阵、当前完成度。
+1. `P4_EEG/ARCHITECTURE.md` — 当前架构与模块职责（**第一次进项目先读这个**）。
+2. `P4_EEG/docs/proposal.md` — 采集 SOP、Marker、被试流程、数据流。
+3. `P4_EEG/experiment/README.md` — 实验代码运行方式。
+4. `P4_EEG/docs/paper_blueprint.md` — 论文叙事、实验矩阵、当前完成度。
 
 ## 当前架构
 
 ```text
 D:\EEG_Project
-├── CLAUDE.md                         # Claude Code 项目规则
+├── CLAUDE.md                         # 本文件
+├── README.md                         # 仓库总览
+├── environment.yml / requirements.txt
 ├── .obsidian/                        # Obsidian vault 配置
-├── .agents/skills/                   # Obsidian Agent Skills
 ├── .claude/                          # Claude Code 项目配置、hooks 与 project-local skills
-└── P4_EEG降噪与任务特征保真/
-    ├── proposal.md                   # P4 采集与训练方案主文档
-    ├── paper_blueprint.md            # Paper 1 论文蓝图
-    └── experiment/
-        ├── README.md                 # 实验代码说明
-        ├── launcher.py               # GUI/Session 调度入口
-        ├── config.py                 # 配置、GUI、Marker 表
-        ├── utils.py                  # Trigger、键盘、绘图、保存等工具
-        ├── session1_resting.py       # S1 静息态
-        ├── session2_artifacts.py     # S2 伪迹模板
-        ├── session3_oddball.py       # S3/S4 P300 Oddball
-        └── session3_ssvep.py         # S3/S4 SSVEP
+├── scripts/                          # 项目级脚本（sync_to_github / run_pipeline / diagnose）
+├── scratch/                          # 临时输出 / 合成测试（gitignore）
+│
+└── P4_EEG/
+    ├── README.md                     # 项目入口
+    ├── ARCHITECTURE.md               # 详细模块说明（第一次进项目先读）
+    │
+    ├── docs/                         # 静态文档集中
+    │   ├── README.md                   # 文档索引
+    │   ├── proposal.md                 # 采集 SOP 主方案
+    │   ├── paper_blueprint.md          # Paper 1 蓝图
+    │   ├── 实验操作指南.md
+    │   ├── 真实设备连接与正式采集指南.md
+    │   └── changelog/                  # 复盘日志
+    │
+    ├── experiment/                   # S1-S4 采集主流程
+    │   ├── README.md
+    │   ├── launcher.py                 # 主入口（GUI + Session 调度 + 相机启停）
+    │   ├── config.py                   # 配置 + MARKER_TABLE（权威）
+    │   ├── utils.py                    # Trigger / Keyboard / 保存
+    │   ├── sessions/                   # 5 个 session*.py
+    │   ├── data/                       # eeg-bdf / eeg-npz / video_records (gitignore，永不修改)
+    │   ├── video/                      # 相机录制 + 视频动作提取
+    │   ├── stimuli/                    # 实验刺激素材
+    │   └── legacy/                     # MATLAB 旧版（历史参考）
+    │
+    ├── processing/                   # EEG 后处理 pipeline
+    │   └── pipeline/{indexer,preprocess,epoching,features,qc,run_pipeline}.py
+    │
+    ├── derivatives/                  # processing 产物（gitignore，可重跑）
+    │
+    └── p8_mi_car/                    # 下游 MI 小车 Demo（独立子项目）
 ```
 
 ## 技术栈
@@ -63,7 +85,7 @@ D:\EEG_Project
 
 ## 关键命令
 
-所有命令默认在 `P4_EEG降噪与任务特征保真/experiment/` 目录下运行。
+所有命令默认在 `P4_EEG/experiment/` 目录下运行。
 
 ### 安装/恢复项目环境
 
@@ -109,39 +131,62 @@ python launcher.py --subject Sub_01 --session 3 --windowed --no-hardware
 python launcher.py --subject Sub_01 --session 4 --windowed --no-hardware
 ```
 
-### 完整流程
-
-README 规划了：
+### 完整流程冒烟测试
 
 ```bash
-python launcher.py --subject Sub_01 --session all --windowed --no-hardware
+python launcher.py --subject Test --session all --quick-test --windowed --no-hardware --no-camera --screen 0
 ```
 
-但修改前必须先确认 `config.py` 是否支持 `--session all`。如果不支持，应修复参数 choices 后再使用。
+`--quick-test` 让 S1-S4 都用极短时长 / 极少 trial 数十秒跑完，验证 GUI / Marker / 保存逻辑无回归。
+
+### EEG 后处理 pipeline
+
+```bash
+cd P4_EEG/processing
+python -m pipeline.run_pipeline --dry-run        # 只扫描配对、不处理
+python -m pipeline.run_pipeline                  # 全跑（默认 ../experiment/data → ../derivatives）
+python -m pipeline.run_pipeline --subject Sub_01 --force
+```
 
 ### Git 检查
 
 ```bash
 git status --short
 git diff --stat
-git diff -- CLAUDE.md P4_EEG降噪与任务特征保真/experiment
+git diff -- CLAUDE.md P4_EEG/experiment
 ```
 
 ## 4-Session 实验核心
 
+> **权威 Marker 表的唯一来源是 [`experiment/config.py:MARKER_TABLE`](P4_EEG/experiment/config.py)**。
+> 下表是给 AI 看的速查版，不要靠记忆覆盖代码。
+
 | Session | 作用 | Marker |
 | --- | --- | --- |
-| S1 静息态 | 干净脑电底色，Alpha 阻断验证 | 11/12, 21/22 |
-| S2 伪迹模板 | 独立眼电/肌电噪声库 | 30/31, 41-45 |
-| S3 银标准任务态 | 干净任务信号 Ground Truth | Oddball 61/62, 基线 63, SSVEP 71/72/73/74 |
-| S4 自然污染测试 | 最终真实噪声测试集 | Oddball 81/82, SSVEP 91/92/93/94 |
+| S1 静息态 | 干净脑电底色，Alpha 阻断验证 | 11/12 (EO), 21/22 (EC) |
+| S2 伪迹模板 | 独立眼电/肌电噪声库 | 30 (按键), 31 (动作起点), 41-48 (8 类伪迹) |
+| S3 银标准任务态 | 干净任务信号 Ground Truth | Oddball 61/62, 任务间基线 63, SSVEP 71/72/73/74 |
+| S4 离线双手 MI | 左右手运动想象采集 | 81-89 (示范 / cue / 想象 / 休息 / block 标记) |
 
 关键设计原则：
 
 - S2 只截取 Marker 31 后的伪迹动作，排除 Marker 30 按键带来的运动电位。
 - S3 刺激窗口严禁眨眼，保留干净 P300/SSVEP/Alpha 特征。
-- S4 重复 S3 任务但允许自然眨眼/面部动作，用作最终考卷。
-- S4 使用独立的 8-bit Marker（81/82/91-94），与 S3 明确区分，并保持与 iRecorder 单字节 Trigger 协议兼容。
+- S4 已从"自然态 Oddball/SSVEP"改为离线双手运动想象，下游接 `p8_mi_car/` 做在线分类。
+- 所有 Marker 严格 < 128，与 iRecorder 单字节 Trigger 协议兼容。
+
+## 关键模块速查（哪改了会爆炸）
+
+| 谁依赖谁 | 改这里影响 |
+|:---|:---|
+| `experiment/launcher.py` → `from sessions.session*` | 改 sessions/ 包路径或 `run_*` 函数签名 |
+| `experiment/launcher.py` → `from video.camera_recorder_controlled import FFmpegCameraRecorder` | 改 `video/camera_recorder_controlled.py` 位置 |
+| `experiment/sessions/*.py` → `from config import MARKER_TABLE / from utils import save_data / TriggerSender / ...` | 改 `config.py` / `utils.py` 的 API |
+| `experiment/utils.py:save_data` → `cfg.data_dir / "eeg-npz"` | 改 NPZ 落点约定 |
+| `processing/pipeline/indexer.py` → `data/eeg-bdf/`, `data/eeg-npz/` | 改 BDF / NPZ 存放路径 |
+| `processing/pipeline/run_pipeline.py` 默认 `--data-dir` = `../experiment/data` | 改 P4 目录树 |
+
+完整版见 [`P4_EEG/ARCHITECTURE.md`](P4_EEG/ARCHITECTURE.md) §7。
 
 ## 代码风格要求
 
@@ -307,8 +352,14 @@ git diff -- CLAUDE.md P4_EEG降噪与任务特征保真/experiment
 
 ## 当前优先级
 
-1. 修复实验脚本中会阻止无硬件测试运行的问题。
-2. 跑通 `--windowed --no-hardware` 的 S1-S4 最小流程。
-3. 建立预实验 checklist 和实验日志模板。
-4. 完成至少 1 个被试的完整 4-Session 采集。
-5. 后续再实现 MNE 切片、伪迹混合、P300/Alpha/SSVEP 指标脚本。
+1. 完成至少 1 个被试的完整 4-Session 正式采集，并跑通 `processing` pipeline 出 QC HTML。
+2. 基于 derivatives 实现"策略 A + 策略 B"（详见 `docs/proposal.md`）的训练对构建脚本。
+3. 实现 task-aware denoiser baseline（先 Mamba2 U-Net 或纯卷积，再做对照实验）。
+4. 把 `p8_mi_car/` 从键盘 Demo 接到 S4 离线 MI 数据，验证在线分类闭环。
+
+## 已经完成的基础设施（≠ 优先级）
+
+- `experiment/sessions/{session1..4}.py` 跑通 `--windowed --no-hardware --quick-test` 全流程。
+- `processing/pipeline/` 6 步法完整：indexer / preprocess / epoching / features / qc / run_pipeline。
+- `experiment/video/video_action_tool/` 完成 YOLOv8-Pose + MediaPipe 动作提取与 GUI。
+- `data/` 重组为 `eeg-bdf / eeg-npz / video_records` 三个子目录，pipeline 自动识别。

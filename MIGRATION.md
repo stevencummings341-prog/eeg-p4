@@ -165,7 +165,7 @@ python -m ipykernel install --user --name eeg-p4 --display-name "Python (eeg-p4)
 视频工具 `environment.yml` 和顶层是同名 `eeg-p4`，但额外加了 `ultralytics / mediapipe / pyarrow`。在已有 `eeg-p4` 的基础上做 update 即可：
 
 ```powershell
-cd D:\yuan_dataset\EEG_Project\P4_EEG降噪与任务特征保真\experiment\video
+cd D:\yuan_dataset\EEG_Project\P4_EEG\experiment\video
 conda env update -n eeg-p4 -f video_action_tool\environment.yml
 ```
 
@@ -180,7 +180,7 @@ conda activate eeg-p4
 python -c "import psychopy, serial, numpy, scipy, mne, pylsl, torch; print('top-level OK')"
 
 # 视频工具
-cd P4_EEG降噪与任务特征保真\experiment\video
+cd P4_EEG\experiment\video
 .\check_environment.bat
 ```
 
@@ -239,7 +239,7 @@ EEG_Project/
 `p8_mi_car/.claude/settings.local.json` 原本被 `.gitignore` 里的 `**/.claude/settings.local.json` 通配规则忽略了。现在 `.gitignore` 里已经加了一条**例外**：
 
 ```text
-!P4_EEG降噪与任务特征保真/p8_mi_car/.claude/settings.local.json
+!P4_EEG/p8_mi_car/.claude/settings.local.json
 ```
 
 意思是：这一个文件**会**跟 git 走，其他位置的 `settings.local.json` 仍然是机器本地。
@@ -263,7 +263,7 @@ EEG_Project/
 下面这些文件**不是 AI 自动加载的**，但 Claude/Cursor 接手时会读，缺一不可：
 
 ```text
-P4_EEG降噪与任务特征保真/
+P4_EEG/
 ├── README.md                                       P4 总览 + 数据流
 └── experiment/
     ├── README.md                                   实验代码用法、Session 时序
@@ -320,7 +320,7 @@ for name, meta in lock['skills'].items():
 
 ```powershell
 conda activate eeg-p4
-cd D:\yuan_dataset\EEG_Project\P4_EEG降噪与任务特征保真\experiment
+cd D:\yuan_dataset\EEG_Project\P4_EEG\experiment
 
 python launcher.py --subject Test --session 1 --windowed --no-hardware --screen 0 --no-camera
 python launcher.py --subject Test --session 2 --windowed --no-hardware --screen 0 --no-camera
@@ -337,7 +337,7 @@ python launcher.py --subject Test --session 4 --windowed --no-hardware --screen 
 视频工具：
 
 ```powershell
-cd P4_EEG降噪与任务特征保真\experiment\video
+cd P4_EEG\experiment\video
 .\check_environment.bat   # 应全 [OK]
 ```
 
@@ -448,7 +448,7 @@ Cursor 默认会把仓库根的 `CLAUDE.md` 当作 always-applied workspace rule
 - [ ] 在本仓库 local 作用域配 git 身份：`git config user.name "Leo"` + `git config user.email "3024593639@qq.com"`
 - [ ] 确认根目录 `CLAUDE.md`、`MIGRATION.md`、`scripts/sync_to_github.ps1`、`.claude/`、`.agents/`、`.vscode/`、`skills-lock.json` 都在
 - [ ] `conda env create -f environment.yml` → `conda activate eeg-p4`
-- [ ] `conda env update -n eeg-p4 -f P4_EEG降噪与任务特征保真\experiment\video\video_action_tool\environment.yml`
+- [ ] `conda env update -n eeg-p4 -f P4_EEG\experiment\video\video_action_tool\environment.yml`
 - [ ] 检查 `.vscode/settings.json` 中 `${env:USERPROFILE}` 是否能解析到本机 `.../envs/eeg-p4/python.exe`；如 Miniconda 不在用户目录，改这一行
 - [ ] 跑 §6 的 4 条无硬件冒烟测试，全部通过
 - [ ] 跑 §3.4 的依赖自检脚本
@@ -470,8 +470,8 @@ D:\yuan_dataset\EEG_Project（如不同请自己识别）。
 
 1. 读取 MIGRATION.md（仓库根），先建立完整迁移视角。
 2. 读取 CLAUDE.md（仓库根），把它作为长期项目规则。
-3. 读取 README.md、P4_EEG降噪与任务特征保真/README.md、
-   P4_EEG降噪与任务特征保真/experiment/README.md。
+3. 读取 README.md、P4_EEG/README.md、
+   P4_EEG/experiment/README.md。
 4. 读取 .claude/settings.json 和 .claude/hooks/*.py，确认数据保护
    hook 和 git 状态 hook 都在原位。
 5. 跑 git status --short，告诉我当前未提交的内容，但不要自动 commit。
