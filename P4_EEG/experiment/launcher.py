@@ -159,6 +159,11 @@ def run_session_safe(cfg: ExperimentConfig, session_num: str):
                 print("  Session 4 — 情绪识别实验 (音视频刺激, 18 trials)")
                 print("="*60 + "\n")
                 run_session4_emotion(cfg)
+            elif scheme == "auditory_attention":
+                from sessions.session4_auditory import run_session4 as run_session4_auditory
+                print("  Session 4 — 听觉注意力实验 (HRTF 空间化双说话人, AAD)")
+                print("="*60 + "\n")
+                run_session4_auditory(cfg)
             elif scheme == "motor_imagery":
                 from sessions.session4_mi import run_session4 as run_session4_mi
                 print("  Session 4 — 离线双手运动想象采集")
@@ -166,7 +171,7 @@ def run_session_safe(cfg: ExperimentConfig, session_num: str):
                 run_session4_mi(cfg)
             else:
                 raise ValueError(
-                    f"未知 scheme={scheme!r}; 期望 'motor_imagery' / 'emotion'. "
+                    f"未知 scheme={scheme!r}; 期望 'motor_imagery' / 'emotion' / 'auditory_attention'. "
                     f"请检查 GUI / --scheme 参数是否正确传入。"
                 )
 
@@ -194,10 +199,12 @@ SESSION_DESCRIPTIONS = {
 def _describe_session(cfg: ExperimentConfig, sess_num: str) -> str:
     if sess_num == "4":
         scheme = _scheme(cfg)
-        return (
-            "Session 4 — 情绪识别 (18 trials)" if scheme == "emotion"
-            else "Session 4 — 离线双手 MI 采集 (~12-18 min)"
-        )
+        if scheme == "emotion":
+            return "Session 4 — 情绪识别 (18 trials)"
+        elif scheme == "auditory_attention":
+            return "Session 4 — 听觉注意力 AAD (~32 trials)"
+        else:
+            return "Session 4 — 离线双手 MI 采集 (~12-18 min)"
     return SESSION_DESCRIPTIONS.get(sess_num, f"Session {sess_num}")
 
 
@@ -302,7 +309,12 @@ def main() -> int:
 
         camera_output_dir = get_camera_output_dir(cfg).resolve()
         scheme = _scheme(cfg)
-        scheme_label = "运动想象 (MI)" if scheme == "motor_imagery" else "情绪识别 (Emotion)"
+        scheme_label_map = {
+            "motor_imagery": "运动想象 (MI)",
+            "emotion": "情绪识别 (Emotion)",
+            "auditory_attention": "听觉注意力 (AAD)",
+        }
+        scheme_label = scheme_label_map.get(scheme, scheme)
 
         # 把用户输入的 "1,3" / "all" / "4" 统一解析成 ["1","3"] 等有序列表
         session_list = parse_sessions(cfg)
@@ -316,7 +328,7 @@ def main() -> int:
         print(f"  串口: {'无硬件' if cfg.no_hardware else cfg.port_name}")
         print(f"  相机: {'启用' if cfg.camera_enabled else '禁用'}")
         if bool(getattr(cfg, "quick_test", False)):
-            print(f"  模式: ⚡ 冒烟测试 (quick-test)，所有 Session 用极短时长 / 极少 trial")
+            print(f"  模式: [quick-test] 冒烟测试，所有 Session 用极短时长 / 极少 trial")
         if cfg.camera_enabled:
             print(f"  相机设备: {cfg.camera_device_name}")
             print(f"  视频保存: {camera_output_dir}")

@@ -446,6 +446,14 @@ def save_data(cfg, session_data: dict, suffix: str = ""):
         "emotion_fixation_duration": getattr(cfg, "emotion_fixation_duration", None),
         "emotion_rest_duration": getattr(cfg, "emotion_rest_duration", None),
         "emotion_random_seed": getattr(cfg, "emotion_random_seed", None),
+        # Auditory Attention scheme
+        "aad_audio_dir": getattr(cfg, "aad_audio_dir", None),
+        "aad_difficulty": getattr(cfg, "aad_difficulty", None),
+        "aad_speed_multiplier": getattr(cfg, "aad_speed_multiplier", None),
+        "aad_trials": getattr(cfg, "aad_trials", None),
+        "aad_random_seed": getattr(cfg, "aad_random_seed", None),
+        "aad_fixation_duration": getattr(cfg, "aad_fixation_duration", None),
+        "aad_rest_duration": getattr(cfg, "aad_rest_duration", None),
     }, ensure_ascii=False)
 
     save_dict = {"config_json": config_json}

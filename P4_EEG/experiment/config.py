@@ -26,8 +26,9 @@ class ExperimentConfig:
     subject_id: str = "Sub_01"
 
     # 实验方案：S1-S3 完全一致；S4 根据 scheme 切换
-    #   "motor_imagery" — Session 4 = 离线双手运动想象（默认）
-    #   "emotion"        — Session 4 = 情绪识别（音视频刺激）
+    #   "motor_imagery"       — Session 4 = 离线双手运动想象（默认）
+    #   "emotion"             — Session 4 = 情绪识别（音视频刺激）
+    #   "auditory_attention"  — Session 4 = 听觉注意力（HRTF 空间化双说话人 AAD）
     scheme: str = "motor_imagery"
 
     # Session 选择
@@ -89,6 +90,15 @@ class ExperimentConfig:
     emotion_fixation_duration: float = 2.0
     emotion_rest_duration: float = 2.0
     emotion_random_seed: int = 42
+
+    # Session 4 — 听觉注意力 AAD (scheme="auditory_attention")
+    aad_audio_dir: str = ""                # 空间化音频目录，默认 experiment/spatialized_90/
+    aad_difficulty: float = 0.0            # 难度调整: 0=正常, 0.5=简单(干扰减半), -0.5=困难(干扰增强)
+    aad_speed_multiplier: int = 1          # 倍速模式: 1=正常, 更大值=飞速测试
+    aad_trials: int = 32                   # 每轮 trial 数
+    aad_random_seed: int = 42              # 随机化种子
+    aad_fixation_duration: float = 2.0     # 刺激前注视十字时长 (秒)
+    aad_rest_duration: float = 2.0         # 刺激后休息时长 (秒)
 
     # Session 3 — 自然态 / 强制眨眼比例
     # 历史遗留：Session 4 曾经是"自然态 Oddball+SSVEP"，现在已改为 MI。
@@ -168,6 +178,15 @@ MARKER_TABLE = {
     "S4_EMOTION_END":        104,
     "S4_EMOTION_BASELINE":   105,
     "S4_EMOTION_REST":       106,
+
+    # Session 4 (scheme="auditory_attention") — 听觉注意力 AAD (<128)
+    "S4_AAD_START":       110,
+    "S4_AAD_BASELINE":    111,
+    "S4_AAD_AUDIO_LEFT":  112,
+    "S4_AAD_AUDIO_RIGHT": 113,
+    "S4_AAD_QUESTION":    114,
+    "S4_AAD_REST":        115,
+    "S4_AAD_END":         116,
 }
 
 
@@ -313,7 +332,8 @@ class ExperimentLauncher:
         scheme_frame = ttk.Frame(row_scheme)
         scheme_frame.pack(side=tk.LEFT, padx=5)
         for s, label in [("motor_imagery", "● 运动想象 (MI)"),
-                         ("emotion", "● 情绪识别 (Emotion)")]:
+                         ("emotion", "● 情绪识别 (Emotion)"),
+                         ("auditory_attention", "● 听觉注意 (AAD)")]:
             ttk.Radiobutton(scheme_frame, text=label, variable=self.var_scheme,
                            value=s, command=self._on_scheme_change).pack(side=tk.LEFT, padx=6)
         self.scheme_status_label = ttk.Label(row_scheme, text="", foreground="#0066AA",
@@ -484,6 +504,40 @@ class ExperimentLauncher:
         self.var_emotion_seed = tk.StringVar(value="42")
         ttk.Entry(row_e2, textvariable=self.var_emotion_seed, width=8).pack(side=tk.LEFT, padx=(0, 6))
 
+        # ---- Session 4 (Auditory Attention) 选项 ----
+        self.aad_frame = ttk.LabelFrame(main_frame, text="Session 4 选项 — 听觉注意力 (AAD)", padding=8)
+        self.aad_frame.pack(fill=tk.X, pady=(5, 5))
+
+        row_a1 = ttk.Frame(self.aad_frame)
+        row_a1.pack(fill=tk.X, pady=2)
+        ttk.Label(row_a1, text="音频目录:").pack(side=tk.LEFT)
+        self.var_aad_audio_dir = tk.StringVar(value="spatialized_90")
+        ttk.Entry(row_a1, textvariable=self.var_aad_audio_dir, width=30).pack(side=tk.LEFT, padx=5)
+
+        row_a2 = ttk.Frame(self.aad_frame)
+        row_a2.pack(fill=tk.X, pady=2)
+        self.var_aad_difficulty = tk.StringVar(value="0.0")
+        self.var_aad_speed = tk.StringVar(value="1")
+        self.var_aad_trials = tk.StringVar(value="32")
+        self.var_aad_seed = tk.StringVar(value="42")
+        ttk.Label(row_a2, text="难度:").pack(side=tk.LEFT)
+        ttk.Entry(row_a2, textvariable=self.var_aad_difficulty, width=6).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Label(row_a2, text="倍速:").pack(side=tk.LEFT)
+        ttk.Entry(row_a2, textvariable=self.var_aad_speed, width=4).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Label(row_a2, text="Trial数:").pack(side=tk.LEFT)
+        ttk.Entry(row_a2, textvariable=self.var_aad_trials, width=5).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Label(row_a2, text="种子:").pack(side=tk.LEFT)
+        ttk.Entry(row_a2, textvariable=self.var_aad_seed, width=6).pack(side=tk.LEFT, padx=(0, 6))
+
+        row_a3 = ttk.Frame(self.aad_frame)
+        row_a3.pack(fill=tk.X, pady=2)
+        self.var_aad_fixation = tk.StringVar(value="2.0")
+        self.var_aad_rest = tk.StringVar(value="2.0")
+        ttk.Label(row_a3, text="注视:").pack(side=tk.LEFT)
+        ttk.Entry(row_a3, textvariable=self.var_aad_fixation, width=6).pack(side=tk.LEFT, padx=(0, 6))
+        ttk.Label(row_a3, text="s   休息:").pack(side=tk.LEFT)
+        ttk.Entry(row_a3, textvariable=self.var_aad_rest, width=6).pack(side=tk.LEFT, padx=(0, 6))
+
         # ---- 通用：被试间顺序平衡 / quick-test ----
         row7 = ttk.Frame(main_frame)
         row7.pack(fill=tk.X, pady=(10, 2))
@@ -512,28 +566,45 @@ class ExperimentLauncher:
 
     def _on_scheme_change(self):
         scheme = self.var_scheme.get()
-        is_mi = scheme == "motor_imagery"
 
-        # 1. 更新 S4 checkbox 文案，让被试方案一目了然
+        # 1. 更新 S4 checkbox 文案
         if hasattr(self, "session_chk_s4"):
-            self.session_chk_s4.configure(text="S4 双手 MI" if is_mi else "S4 情绪识别")
+            label_map = {
+                "motor_imagery": "S4 双手 MI",
+                "emotion": "S4 情绪识别",
+                "auditory_attention": "S4 听觉 AAD",
+            }
+            self.session_chk_s4.configure(text=label_map.get(scheme, "S4"))
 
         # 2. 顶部状态横幅
         if hasattr(self, "scheme_status_label"):
-            label = "运动想象 (MI)" if is_mi else "情绪识别 (Emotion)"
-            self.scheme_status_label.configure(text=f"→ S4 将执行：{label}")
+            label_map2 = {
+                "motor_imagery": "运动想象 (MI)",
+                "emotion": "情绪识别 (Emotion)",
+                "auditory_attention": "听觉注意力 (AAD)",
+            }
+            self.scheme_status_label.configure(
+                text=f"→ S4 将执行：{label_map2.get(scheme, scheme)}"
+            )
 
-        # 3. 真正禁用/启用对应的 S4 参数框中所有 child widget
-        if hasattr(self, "mi_frame") and hasattr(self, "emotion_frame"):
-            active = self.mi_frame if is_mi else self.emotion_frame
-            inactive = self.emotion_frame if is_mi else self.mi_frame
+        # 3. 禁用/启用对应的 S4 参数框
+        frames = {}
+        if hasattr(self, "mi_frame"):
+            frames["motor_imagery"] = self.mi_frame
+        if hasattr(self, "emotion_frame"):
+            frames["emotion"] = self.emotion_frame
+        if hasattr(self, "aad_frame"):
+            frames["auditory_attention"] = self.aad_frame
+
+        for key, frame in frames.items():
+            is_active = key == scheme
             try:
-                active.configure(text=active.cget("text").split(" — ")[0] + " — ✓ 当前方案")
-                inactive.configure(text=inactive.cget("text").split(" — ")[0] + " — (本次不使用)")
+                base = frame.cget("text").split(" — ")[0]
+                suffix = " — ✓ 当前方案" if is_active else " — (本次不使用)"
+                frame.configure(text=base + suffix)
             except Exception:
                 pass
-            self._set_frame_state(active, "normal")
-            self._set_frame_state(inactive, "disabled")
+            self._set_frame_state(frame, "normal" if is_active else "disabled")
 
     @staticmethod
     def _set_frame_state(frame, state: str):
@@ -582,7 +653,7 @@ class ExperimentLauncher:
         try:
             cfg = ExperimentConfig()
             cfg.scheme = self.var_scheme.get()
-            if cfg.scheme not in ("motor_imagery", "emotion"):
+            if cfg.scheme not in ("motor_imagery", "emotion", "auditory_attention"):
                 raise ValueError(f"未知实验方案: {cfg.scheme}")
             cfg.subject_id = self.var_subject.get().strip()
             if not cfg.subject_id:
@@ -623,6 +694,13 @@ class ExperimentLauncher:
             cfg.emotion_fixation_duration = float(self.var_emotion_fixation.get())
             cfg.emotion_rest_duration = float(self.var_emotion_rest.get())
             cfg.emotion_random_seed = int(self.var_emotion_seed.get())
+            cfg.aad_audio_dir = self.var_aad_audio_dir.get().strip()
+            cfg.aad_difficulty = float(self.var_aad_difficulty.get())
+            cfg.aad_speed_multiplier = int(self.var_aad_speed.get())
+            cfg.aad_trials = int(self.var_aad_trials.get())
+            cfg.aad_random_seed = int(self.var_aad_seed.get())
+            cfg.aad_fixation_duration = float(self.var_aad_fixation.get())
+            cfg.aad_rest_duration = float(self.var_aad_rest.get())
             cfg.session_order = self.var_order.get()
             cfg.quick_test = self.var_quick_test.get()
 
@@ -650,8 +728,8 @@ def config_from_args() -> ExperimentConfig:
 
     parser = argparse.ArgumentParser(description="P4 EEG 降噪实验")
     parser.add_argument("--scheme", default="motor_imagery",
-                       choices=["motor_imagery", "emotion"],
-                       help="S4 实验方案：motor_imagery=运动想象 / emotion=情绪识别")
+                       choices=["motor_imagery", "emotion", "auditory_attention"],
+                       help="S4 实验方案：motor_imagery=运动想象 / emotion=情绪识别 / auditory_attention=听觉注意力")
     parser.add_argument("--subject", default="Sub_01", help="被试 ID")
     parser.add_argument("--session", default="1",
                        help="Session 选择：单值 (1/2/3/4)、'all'、或逗号列表 (例如 3,4 / 1,3,4)")
@@ -680,6 +758,20 @@ def config_from_args() -> ExperimentConfig:
                        help="Session 4 情绪方案：刺激后休息时长 (秒)")
     parser.add_argument("--emotion-seed", type=int, default=42,
                        help="Session 4 情绪方案：视频随机化种子")
+    parser.add_argument("--aad-audio-dir", default="",
+                       help="Session 4 听觉注意力方案：空间化音频目录 (默认 experiment/spatialized_90/)")
+    parser.add_argument("--aad-difficulty", type=float, default=0.0,
+                       help="Session 4 听觉注意力方案：难度 (-1=困难, 0=正常, 1=简单)")
+    parser.add_argument("--aad-speed-multiplier", type=int, default=1,
+                       help="Session 4 听觉注意力方案：倍速 (1=正常, 更大=飞速测试)")
+    parser.add_argument("--aad-trials", type=int, default=32,
+                       help="Session 4 听觉注意力方案：每轮 trial 数")
+    parser.add_argument("--aad-seed", type=int, default=42,
+                       help="Session 4 听觉注意力方案：随机化种子")
+    parser.add_argument("--aad-fixation-duration", type=float, default=2.0,
+                       help="Session 4 听觉注意力方案：刺激前注视十字时长 (秒)")
+    parser.add_argument("--aad-rest-duration", type=float, default=2.0,
+                       help="Session 4 听觉注意力方案：刺激后休息时长 (秒)")
     parser.add_argument("--ssvep-grid-debug", action="store_true", help="SSVEP 四宫格持续闪烁调试模式")
     parser.add_argument("--natural-mode", action="store_true",
                        help="Session 3 自然态 (历史遗留，对当前 Marker 表无影响)")
@@ -716,6 +808,13 @@ def config_from_args() -> ExperimentConfig:
     cfg.emotion_fixation_duration = args.emotion_fixation_duration
     cfg.emotion_rest_duration = args.emotion_rest_duration
     cfg.emotion_random_seed = args.emotion_seed
+    cfg.aad_audio_dir = args.aad_audio_dir
+    cfg.aad_difficulty = args.aad_difficulty
+    cfg.aad_speed_multiplier = args.aad_speed_multiplier
+    cfg.aad_trials = args.aad_trials
+    cfg.aad_random_seed = args.aad_seed
+    cfg.aad_fixation_duration = args.aad_fixation_duration
+    cfg.aad_rest_duration = args.aad_rest_duration
     cfg.ssvep_grid_debug = args.ssvep_grid_debug
     cfg.natural_mode = args.natural_mode
     cfg.forced_blink_ratio = args.forced_blink_ratio
